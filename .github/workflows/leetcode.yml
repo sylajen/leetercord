@@ -1,0 +1,37 @@
+name: LeetCode Leaderboard
+
+on:
+  schedule:
+    # 1:15 AM UTC daily (adjust if you want)
+    - cron: "15 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run snapshot + post
+        env:
+          LEETCODE_USERS: ${{ secrets.LEETCODE_USERS }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          npm run run
+
+      - name: Commit updated snapshots
+        run: |
+          git config user.name "leetcode-bot"
+          git config user.email "leetcode-bot@users.noreply.github.com"
+          git add snapshots.json
+          git commit -m "chore: update snapshots" || echo "No changes"
+          git push
