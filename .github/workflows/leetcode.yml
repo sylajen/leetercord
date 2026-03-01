@@ -2,8 +2,8 @@ name: LeetCode Leaderboard
 
 on:
   schedule:
-    # 1:15 AM UTC daily (adjust if you want)
-    - cron: "15 1 * * *"
+    # runs at 9AM EST
+    - cron: "0 14 * * *" 
   workflow_dispatch:
 
 permissions:
