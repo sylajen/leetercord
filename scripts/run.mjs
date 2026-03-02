@@ -14,9 +14,15 @@ const USERS = mustEnv("LEETCODE_USERS")
   .map(s => s.trim())
   .filter(Boolean);
 
+const USERS = JSON.parse(fs.readFileSync("config/users.json", "utf8"));
+  for (const u of USERS) {
+    const stats = await fetchLeetCodeStats(u.leetcode);
+    // store as { name: u.name, username: u.leetcode, ... }
+  }
+
 const DISCORD_WEBHOOK_URL = mustEnv("DISCORD_WEBHOOK_URL");
 
-// ---- LeetCode GraphQL fetch (public; no login) ----
+// ---- LeetCode GraphQL fetch ----
 async function fetchLeetCodeStats(username) {
   const query = `
     query userPublicProfile($username: String!) {
@@ -72,7 +78,6 @@ async function fetchLeetCodeStats(username) {
 
 function todayISO() {
   // Use UTC date to avoid DST/timezone weirdness in Actions.
-  // If you want Toronto-local “day”, we can adjust later.
   return new Date().toISOString().slice(0, 10);
 }
 
