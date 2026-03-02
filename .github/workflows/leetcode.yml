@@ -2,16 +2,19 @@ name: LeetCode Leaderboard
 
 on:
   schedule:
-    # runs at 9AM EST
-    - cron: "0 14 * * *" 
+    # runs at 9AM EST daily
+    - cron: "0 14 * * *"
+    # runs at 12PM EST every Sunday
+    - cron: "0 17 * * 0"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  run:
+  daily:
     runs-on: ubuntu-latest
+    if: github.event.schedule != '0 17 * * 0'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +26,6 @@ jobs:
 
       - name: Run snapshot + post
         env:
-          LEETCODE_USERS: ${{ secrets.LEETCODE_USERS }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           npm run run
@@ -35,3 +37,21 @@ jobs:
           git add snapshots.json
           git commit -m "chore: update snapshots" || echo "No changes"
           git push
+
+  weekly-summary:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 17 * * 0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run weekly summary
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          node scripts/weekly-summary.mjs
