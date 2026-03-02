@@ -153,9 +153,11 @@ async function main() {
     return { username: s.username, totalSolved: s.totalSolved, delta: Math.max(0, s.totalSolved - prev) };
   }).sort((a, b) => b.delta - a.delta);
 
-  // Compute weekly delta using 7 days ago (or nearest prior)
+  // Compute weekly delta using oldest snapshot within last 7 days
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
-  const prevWeekly = getSnapshotOnOrBefore(snapshotsByDate, sevenDaysAgo);
+  const dates = Object.keys(snapshotsByDate).sort(); // ascending order
+  const oldestInRange = dates.find(d => d >= sevenDaysAgo && d <= dateToday);
+  const prevWeekly = oldestInRange ? { date: oldestInRange, data: snapshotsByDate[oldestInRange] } : null;
   const prevWeeklyData = prevWeekly?.data ?? {};
 
   const weeklyRows = stats.map(s => {
