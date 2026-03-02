@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const SNAPSHOT_PATH = path.join(process.cwd(), "snapshots.json");
+const CONFIG_PATH = path.join(process.cwd(), "config", "users.json");
 
 function mustEnv(name) {
   const v = process.env[name];
@@ -9,17 +10,8 @@ function mustEnv(name) {
   return v;
 }
 
-const USERS = mustEnv("LEETCODE_USERS")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
-
-const USERS = JSON.parse(fs.readFileSync("config/users.json", "utf8"));
-  for (const u of USERS) {
-    const stats = await fetchLeetCodeStats(u.leetcode);
-    // store as { name: u.name, username: u.leetcode, ... }
-  }
-
+// Read users from config/users.json instead of env vars
+const USERS = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
 const DISCORD_WEBHOOK_URL = mustEnv("DISCORD_WEBHOOK_URL");
 
 // ---- LeetCode GraphQL fetch ----
@@ -138,9 +130,9 @@ async function main() {
   // Fetch all users (sequential to be gentle; 4 users is fine)
   const stats = [];
   for (const u of USERS) {
-    const s = await fetchLeetCodeStats(u);
+    const s = await fetchLeetCodeStats(u.leetcode);
     if (!s) {
-      stats.push({ username: u, totalSolved: 0, easy: 0, medium: 0, hard: 0, missing: true });
+      stats.push({ username: u.leetcode, totalSolved: 0, easy: 0, medium: 0, hard: 0, missing: true });
     } else {
       stats.push(s);
     }
