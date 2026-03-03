@@ -200,7 +200,37 @@ async function main() {
     ? `\n\n⚠️ Could not read profiles for: ${missing.map(u => `\`${u}\``).join(", ")} (check usernames / profile availability).`
     : "";
 
+  // Get current time in EST
+  const now = new Date();
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+  const currentTime = timeFormatter.format(now);
+  const currentDate = dateFormatter.format(now);
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    hour: "numeric",
+    hour12: false
+  });
+  const currentHour = parseInt(hourFormatter.format(now));
+  const isFirstRun = currentHour === 9;
+
+  const header = isFirstRun ? `# 📅 ${currentDate}\n\n` : "";
+  const timeStamp = `_Update at ${currentTime} EST_\n\n`;
+
   const msg =
+    header +
+    timeStamp +
     formatLeaderboard({ title: `LeetCode Daily (+ since ${prevDaily?.date ?? "last snapshot"})`, rows: dailyRows }) +
     "\n\n" +
     formatLeaderboard({ title: `LeetCode Weekly (+ since ${prevWeekly?.date ?? "last snapshot"})`, rows: weeklyRows }) +
