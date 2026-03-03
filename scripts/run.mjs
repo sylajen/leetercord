@@ -191,7 +191,12 @@ async function main() {
   const prevWeeklyData = prevWeekly?.data ?? {};
 
   const weeklyRows = stats.map(s => {
-    const prev = prevWeeklyData[s.username]?.totalSolved ?? s.totalSolved;
+    let prev = prevWeeklyData[s.username]?.totalSolved;
+    // If user not in weekly snapshot, find their first-ever snapshot
+    if (prev === undefined) {
+      const firstSnapshot = getLatestUserSnapshotBefore(snapshotsByDate, s.username, "9999-12-31");
+      prev = firstSnapshot?.totalSolved ?? 0;
+    }
     return { username: s.username, totalSolved: s.totalSolved, delta: Math.max(0, s.totalSolved - prev) };
   }).sort((a, b) => b.delta - a.delta);
 
