@@ -3,6 +3,7 @@ import path from "node:path";
 
 const CONFIG_PATH = path.join(process.cwd(), "config", "users.json");
 const SNAPSHOT_PATH = path.join(process.cwd(), "snapshots.json");
+const REPORT_TZ = "America/New_York";
 
 function mustEnv(name) {
   const v = process.env[name];
@@ -20,38 +21,59 @@ function readSnapshots() {
   return JSON.parse(fs.readFileSync(SNAPSHOT_PATH, "utf8"));
 }
 
+function datePartsInTimeZone(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    weekday: weekdayMap[map.weekday]
+  };
+}
+
+function isoFromParts(year, month, day) {
+  return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
+}
+
+function shiftISODate(isoDate, days) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return isoFromParts(year, month, day + days);
+}
+
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  const p = datePartsInTimeZone(new Date(), REPORT_TZ);
+  return isoFromParts(p.year, p.month, p.day);
 }
 
 function getWeekRange() {
-  const today = new Date();
-  const dayOfWeek = today.getUTCDay();
-  const diff = today.getUTCDate() - dayOfWeek; // Sunday is 0
-  
-  const sunday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), diff));
-  const sundayISO = sunday.toISOString().slice(0, 10);
-  const todayISO = today.toISOString().slice(0, 10);
-  
-  return { start: sundayISO, end: todayISO };
+  const p = datePartsInTimeZone(new Date(), REPORT_TZ);
+  const end = isoFromParts(p.year, p.month, p.day);
+  const start = shiftISODate(end, -p.weekday); // Sunday to today
+  return { start, end };
 }
 
 function getMonthRange() {
-  const today = new Date();
-  const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
-  const monthStartISO = monthStart.toISOString().slice(0, 10);
-  const todayISO = today.toISOString().slice(0, 10);
-  
-  return { start: monthStartISO, end: todayISO };
+  const p = datePartsInTimeZone(new Date(), REPORT_TZ);
+  const end = isoFromParts(p.year, p.month, p.day);
+  const start = isoFromParts(p.year, p.month, 1);
+  return { start, end };
 }
 
 function getYearRange() {
-  const today = new Date();
-  const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1));
-  const yearStartISO = yearStart.toISOString().slice(0, 10);
-  const todayISO = today.toISOString().slice(0, 10);
-  
-  return { start: yearStartISO, end: todayISO };
+  const p = datePartsInTimeZone(new Date(), REPORT_TZ);
+  const end = isoFromParts(p.year, p.month, p.day);
+  const start = isoFromParts(p.year, 1, 1);
+  return { start, end };
 }
 
 function getSnapshotsInRange(snapshotsByDate, startDate, endDate) {

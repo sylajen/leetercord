@@ -3,6 +3,7 @@ import path from "node:path";
 
 const SNAPSHOT_PATH = path.join(process.cwd(), "snapshots.json");
 const CONFIG_PATH = path.join(process.cwd(), "config", "users.json");
+const REPORT_TZ = "America/New_York";
 
 function mustEnv(name) {
   const v = process.env[name];
@@ -68,9 +69,23 @@ async function fetchLeetCodeStats(username) {
   };
 }
 
+function dateISOInTimeZone(date, timeZone) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+function shiftISODate(isoDate, days) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return shifted.toISOString().slice(0, 10);
+}
+
 function todayISO() {
-  // Use UTC date to avoid DST/timezone weirdness in Actions.
-  return new Date().toISOString().slice(0, 10);
+  return dateISOInTimeZone(new Date(), REPORT_TZ);
 }
 
 function readSnapshots() {
@@ -93,6 +108,16 @@ function getSnapshotOnOrBefore(snapshotsByDate, targetDate) {
     else break;
   }
   return chosen ? { date: chosen, data: snapshotsByDate[chosen] } : null;
+}
+
+function getLatestUserSnapshotBefore(snapshotsByDate, username, beforeDate) {
+  const dates = Object.keys(snapshotsByDate).sort().reverse(); // descending
+  for (const d of dates) {
+    if (d >= beforeDate) continue;
+    const row = snapshotsByDate[d]?.[username];
+    if (row) return row;
+  }
+  return null;
 }
 
 function formatLeaderboard({ title, rows }) {
@@ -132,9 +157,14 @@ async function main() {
   for (const u of USERS) {
     const s = await fetchLeetCodeStats(u.leetcode);
     if (!s) {
-      stats.push({ username: u.leetcode, totalSolved: 0, easy: 0, medium: 0, hard: 0, missing: true });
+      const fallback = getLatestUserSnapshotBefore(snapshotsByDate, u.leetcode, dateToday);
+      if (fallback) {
+        stats.push({ ...fallback, username: u.leetcode, missing: true });
+      } else {
+        stats.push({ username: u.leetcode, totalSolved: 0, easy: 0, medium: 0, hard: 0, missing: true });
+      }
     } else {
-      stats.push(s);
+      stats.push({ ...s, username: u.leetcode });
     }
   }
 
@@ -143,8 +173,8 @@ async function main() {
   snapshotsFile.snapshots = snapshotsByDate;
   writeSnapshots(snapshotsFile);
 
-  // Compute daily delta using yesterday (or latest prior day)
-  const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+  // Compute daily delta using EST yesterday (or latest prior day)
+  const yesterday = shiftISODate(dateToday, -1);
   const prevDaily = getSnapshotOnOrBefore(snapshotsByDate, yesterday);
   const prevDailyData = prevDaily?.data ?? {};
 
@@ -153,8 +183,8 @@ async function main() {
     return { username: s.username, totalSolved: s.totalSolved, delta: Math.max(0, s.totalSolved - prev) };
   }).sort((a, b) => b.delta - a.delta);
 
-  // Compute weekly delta using oldest snapshot within last 7 days
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  // Compute weekly delta using oldest snapshot within last 7 EST days
+  const sevenDaysAgo = shiftISODate(dateToday, -7);
   const dates = Object.keys(snapshotsByDate).sort(); // ascending order
   const oldestInRange = dates.find(d => d >= sevenDaysAgo && d <= dateToday);
   const prevWeekly = oldestInRange ? { date: oldestInRange, data: snapshotsByDate[oldestInRange] } : null;
