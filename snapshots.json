@@ -82,6 +82,36 @@
         "medium": 7,
         "hard": 0
       }
+    },
+    "2026-03-04": {
+      "sylajen": {
+        "username": "sylajen",
+        "totalSolved": 10,
+        "easy": 7,
+        "medium": 3,
+        "hard": 0
+      },
+      "salinisiva": {
+        "username": "salinisiva",
+        "totalSolved": 26,
+        "easy": 26,
+        "medium": 0,
+        "hard": 0
+      },
+      "ArwinM": {
+        "username": "ArwinM",
+        "totalSolved": 1,
+        "easy": 1,
+        "medium": 0,
+        "hard": 0
+      },
+      "Sarujan28": {
+        "username": "Sarujan28",
+        "totalSolved": 24,
+        "easy": 17,
+        "medium": 7,
+        "hard": 0
+      }
     }
   }
 }
