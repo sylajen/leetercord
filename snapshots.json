@@ -142,6 +142,36 @@
         "medium": 9,
         "hard": 0
       }
+    },
+    "2026-03-06": {
+      "sylajen": {
+        "username": "sylajen",
+        "totalSolved": 10,
+        "easy": 7,
+        "medium": 3,
+        "hard": 0
+      },
+      "salinisiva": {
+        "username": "salinisiva",
+        "totalSolved": 31,
+        "easy": 30,
+        "medium": 1,
+        "hard": 0
+      },
+      "ArwinM": {
+        "username": "ArwinM",
+        "totalSolved": 2,
+        "easy": 2,
+        "medium": 0,
+        "hard": 0
+      },
+      "Sarujan28": {
+        "username": "Sarujan28",
+        "totalSolved": 26,
+        "easy": 17,
+        "medium": 9,
+        "hard": 0
+      }
     }
   }
 }
