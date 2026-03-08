@@ -84,14 +84,29 @@ function getSnapshotsInRange(snapshotsByDate, startDate, endDate) {
   return { startDate, endDate, dates };
 }
 
+function getBaselineSnapshotForUser(user, snapshotsByDate, range) {
+  const { dates } = range;
+  if (dates.length === 0) return null;
+
+  const preferred = snapshotsByDate[dates[0]]?.[user.leetcode];
+  if (preferred) return preferred;
+
+  for (const d of dates) {
+    const row = snapshotsByDate[d]?.[user.leetcode];
+    if (row) return row;
+  }
+
+  return null;
+}
+
 function calculateStats(user, snapshotsByDate, range) {
-  const { dates, startDate } = range;
+  const { dates } = range;
   
   if (dates.length === 0) {
     return { username: user.leetcode, easy: 0, medium: 0, hard: 0, change: 0 };
   }
   
-  const firstSnapshot = snapshotsByDate[dates[0]]?.[user.leetcode];
+  const firstSnapshot = getBaselineSnapshotForUser(user, snapshotsByDate, range);
   const lastSnapshot = snapshotsByDate[dates[dates.length - 1]]?.[user.leetcode];
   
   if (!firstSnapshot || !lastSnapshot) {
