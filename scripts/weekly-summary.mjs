@@ -170,13 +170,37 @@ async function main() {
   const weekStats = USERS.map(u => calculateStats(u, snapshotsByDate, weekSnapshots));
   const monthStats = USERS.map(u => calculateStats(u, snapshotsByDate, monthSnapshots));
   const yearStats = USERS.map(u => calculateStats(u, snapshotsByDate, yearSnapshots));
+
+  const now = new Date();
+  const reportDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(now);
+  const reportTime = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).format(now);
+
+  const topDivider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+  const bottomDivider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
   
   const msg =
+    `${topDivider}\n` +
+    `# 🚀 **WEEKLY LEETERCORD REPORT** 🚀\n` +
+    `## **${reportDate}**\n` +
+    `_Generated at ${reportTime} EST_\n` +
+    `${topDivider}\n\n` +
     formatSummary({ title: `Weekly Summary (${weekRange.start} → ${weekRange.end})`, stats: weekStats }) +
     "\n\n" +
     formatSummary({ title: `Monthly Summary (${monthRange.start} → ${monthRange.end})`, stats: monthStats }) +
     "\n\n" +
-    formatSummary({ title: `Yearly Summary (${yearRange.start} → ${yearRange.end})`, stats: yearStats });
+    formatSummary({ title: `Yearly Summary (${yearRange.start} → ${yearRange.end})`, stats: yearStats }) +
+    `\n\n${bottomDivider}`;
   
   await postToDiscord(msg);
 }

@@ -4,12 +4,10 @@ on:
   schedule:
     # runs at 9AM EST daily
     - cron: "0 14 * * *"
-    # runs at 1PM EST daily
-    - cron: "0 18 * * *"
-    # runs at 6PM EST daily
-    - cron: "0 23 * * *"
-    # runs at 11:30PM EST daily
-    - cron: "30 4 * * *"
+    # runs at 4PM EST daily
+    - cron: "0 21 * * *"
+    # runs at 11:00PM EST daily
+    - cron: "0 4 * * *"
     # runs at 12PM EST every Sunday
     - cron: "0 17 * * 0"
   workflow_dispatch:

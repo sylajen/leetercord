@@ -135,15 +135,36 @@ function getUserBaselineTotal({ snapshotsByDate, username, preferredDate, rangeS
   return null;
 }
 
-function formatLeaderboard({ title, rows }) {
+function formatCombinedTable({ dailyRows, weeklyRows, dailySince, weeklySince }) {
+  // Create a map of username -> {daily, weekly, total}
+  const dataByUser = new Map();
+  
+  dailyRows.forEach(d => {
+    dataByUser.set(d.username, { daily: d.delta, total: d.totalSolved });
+  });
+  
+  weeklyRows.forEach(w => {
+    const existing = dataByUser.get(w.username) || {};
+    dataByUser.set(w.username, { ...existing, weekly: w.delta });
+  });
+  
+  // Sort by weekly delta descending
+  const sorted = Array.from(dataByUser.entries())
+    .map(([username, data]) => ({ username, ...data }))
+    .sort((a, b) => (b.weekly || 0) - (a.weekly || 0));
+  
   const lines = [];
-  lines.push(`**${title}**`);
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    lines.push(
-      `${i + 1}. \`${r.username}\` — **${r.delta}** (${r.totalSolved} total)`
-    );
-  }
+  lines.push(`**LeetCode Progress** (Daily since ${dailySince} · Weekly since ${weeklySince})`);
+  lines.push("");
+  lines.push("| User | Daily | Weekly | Total |");
+  lines.push("|------|-------|--------|-------|");
+  
+  sorted.forEach(row => {
+    const daily = row.daily ?? 0;
+    const weekly = row.weekly ?? 0;
+    lines.push(`| \`${row.username}\` | **${daily}** | **${weekly}** | ${row.total} |`);
+  });
+  
   return lines.join("\n");
 }
 
@@ -256,9 +277,12 @@ async function main() {
   const msg =
     header +
     timeStamp +
-    formatLeaderboard({ title: `LeetCode Daily (+ since ${prevDaily?.date ?? "last snapshot"})`, rows: dailyRows }) +
-    "\n\n" +
-    formatLeaderboard({ title: `LeetCode Weekly (+ since ${prevWeekly?.date ?? "last snapshot"})`, rows: weeklyRows }) +
+    formatCombinedTable({
+      dailyRows,
+      weeklyRows,
+      dailySince: prevDaily?.date ?? "last snapshot",
+      weeklySince: prevWeekly?.date ?? "last snapshot"
+    }) +
     note;
 
   await postToDiscord(msg);
