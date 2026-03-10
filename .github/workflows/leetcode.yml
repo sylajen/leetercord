@@ -31,6 +31,7 @@ jobs:
       - name: Run snapshot + post
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPORT_SLOT: ${{ github.event.schedule == '0 14 * * *' && 'morning' || 'regular' }}
         run: |
           npm run run
 

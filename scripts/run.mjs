@@ -152,19 +152,29 @@ function formatCombinedTable({ dailyRows, weeklyRows, dailySince, weeklySince })
   const sorted = Array.from(dataByUser.entries())
     .map(([username, data]) => ({ username, ...data }))
     .sort((a, b) => (b.weekly || 0) - (a.weekly || 0));
-  
+
+  const nameWidth = Math.max(4, ...sorted.map(r => r.username.length));
+  const dailyWidth = Math.max(5, ...sorted.map(r => String(r.daily ?? 0).length));
+  const weeklyWidth = Math.max(6, ...sorted.map(r => String(r.weekly ?? 0).length));
+  const totalWidth = Math.max(5, ...sorted.map(r => String(r.total ?? 0).length));
+
+  const pad = (value, width) => String(value).padEnd(width, " ");
+
   const lines = [];
   lines.push(`**LeetCode Progress** (Daily since ${dailySince} · Weekly since ${weeklySince})`);
   lines.push("");
-  lines.push("| User | Daily | Weekly | Total |");
-  lines.push("|------|-------|--------|-------|");
-  
+  lines.push("```");
+  lines.push(`${pad("User", nameWidth)}  ${pad("Daily", dailyWidth)}  ${pad("Weekly", weeklyWidth)}  ${pad("Total", totalWidth)}`);
+  lines.push(`${"-".repeat(nameWidth)}  ${"-".repeat(dailyWidth)}  ${"-".repeat(weeklyWidth)}  ${"-".repeat(totalWidth)}`);
+
   sorted.forEach(row => {
-    const daily = row.daily ?? 0;
-    const weekly = row.weekly ?? 0;
-    lines.push(`| \`${row.username}\` | **${daily}** | **${weekly}** | ${row.total} |`);
+    lines.push(
+      `${pad(row.username, nameWidth)}  ${pad(row.daily ?? 0, dailyWidth)}  ${pad(row.weekly ?? 0, weeklyWidth)}  ${pad(row.total ?? 0, totalWidth)}`
+    );
   });
-  
+
+  lines.push("```");
+
   return lines.join("\n");
 }
 
@@ -263,13 +273,7 @@ async function main() {
   });
   const currentTime = timeFormatter.format(now);
   const currentDate = dateFormatter.format(now);
-  const hourFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: REPORT_TZ,
-    hour: "numeric",
-    hour12: false
-  });
-  const currentHour = parseInt(hourFormatter.format(now));
-  const isFirstRun = currentHour === 9;
+  const isFirstRun = process.env.REPORT_SLOT === "morning";
 
   const header = isFirstRun ? `# 📅 ${currentDate}\n\n` : "";
   const timeStamp = `_Update at ${currentTime} EST_\n\n`;
