@@ -78,6 +78,26 @@ function dateISOInTimeZone(date, timeZone) {
   }).format(date);
 }
 
+function datePartsInTimeZone(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    weekday: weekdayMap[map.weekday]
+  };
+}
+
 function shiftISODate(isoDate, days) {
   const [year, month, day] = isoDate.split("-").map(Number);
   const shifted = new Date(Date.UTC(year, month - 1, day + days));
@@ -86,6 +106,12 @@ function shiftISODate(isoDate, days) {
 
 function todayISO() {
   return dateISOInTimeZone(new Date(), REPORT_TZ);
+}
+
+function currentWeekStartISO() {
+  const p = datePartsInTimeZone(new Date(), REPORT_TZ);
+  const today = new Date(Date.UTC(p.year, p.month - 1, p.day)).toISOString().slice(0, 10);
+  return shiftISODate(today, -p.weekday);
 }
 
 function readSnapshots() {
@@ -234,10 +260,10 @@ async function main() {
     return { username: s.username, totalSolved: s.totalSolved, delta: Math.max(0, s.totalSolved - prev) };
   }).sort((a, b) => b.delta - a.delta);
 
-  // Compute weekly delta using oldest snapshot within last 7 EST days
-  const sevenDaysAgo = shiftISODate(dateToday, -7);
+  // Compute weekly delta for the current EST week (Sunday -> Saturday)
+  const weekStart = currentWeekStartISO();
   const dates = Object.keys(snapshotsByDate).sort(); // ascending order
-  const oldestInRange = dates.find(d => d >= sevenDaysAgo && d <= dateToday);
+  const oldestInRange = dates.find(d => d >= weekStart && d <= dateToday);
   const prevWeekly = oldestInRange ? { date: oldestInRange, data: snapshotsByDate[oldestInRange] } : null;
 
   const weeklyRows = stats.map(s => {
@@ -245,7 +271,7 @@ async function main() {
       snapshotsByDate,
       username: s.username,
       preferredDate: prevWeekly?.date,
-      rangeStart: prevWeekly?.date ?? sevenDaysAgo,
+      rangeStart: prevWeekly?.date ?? weekStart,
       rangeEnd: dateToday
     }) ?? s.totalSolved;
     return { username: s.username, totalSolved: s.totalSolved, delta: Math.max(0, s.totalSolved - prev) };
@@ -285,7 +311,7 @@ async function main() {
       dailyRows,
       weeklyRows,
       dailySince: prevDaily?.date ?? "last snapshot",
-      weeklySince: prevWeekly?.date ?? "last snapshot"
+      weeklySince: weekStart
     }) +
     note;
 

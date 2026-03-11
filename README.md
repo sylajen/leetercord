@@ -7,7 +7,7 @@ A simple bot that posts LeetCode progress leaderboards to Discord multiple times
 This bot tracks LeetCode problem-solving progress for a group of users and posts updates to a Discord channel via webhook. It shows:
 
 - **Daily progress** - how many problems each person solved since yesterday
-- **Weekly progress** - problems solved in the last 7 days
+- **Weekly progress** - problems solved in the current Sunday-Saturday week
 - **Time-stamped updates** - 4 updates per day (9 AM, 1 PM, 6 PM, 11:30 PM EST)
 - **Weekly summaries** - every Sunday at noon with detailed breakdowns by difficulty (Easy/Medium/Hard)
 
@@ -95,7 +95,7 @@ DISCORD_WEBHOOK_URL="your-webhook-url" npm run run
 The bot saves a snapshot of everyone's total problems solved at each run. When calculating deltas:
 
 - **Daily** = today's snapshot - yesterday's snapshot
-- **Weekly** = today's snapshot - oldest snapshot from last 7 days
+- **Weekly** = today's snapshot - baseline snapshot from the current Sunday-Saturday week
 
 This means if someone solves 3 problems between 9 AM and 1 PM, the 1 PM update will show those 3 as part of their "daily" count. The system is cumulative throughout each EST day.
 
